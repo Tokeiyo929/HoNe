@@ -19,6 +19,7 @@ public class UIInterface : MonoBehaviour
     public GameObject level3Objects;      // 第三关物体父节点
     public GameObject level4Objects;      // 第四关物体父节点
     public GameObject level5Objects;      // 第五关物体父节点
+    public GameObject level4ObjectsAlt;
 
     [Header("按钮")]
     public Button startGameButton;        // 进入游戏按钮
@@ -117,6 +118,10 @@ public class UIInterface : MonoBehaviour
     public int level2CountdownSeconds = 180;
     [Tooltip("第三关倒计时（秒）")]
     public int level3CountdownSeconds = 300;
+    [Tooltip("第四关倒计时（秒）")]
+    public int level4CountdownSeconds = 300;
+    [Tooltip("第五关倒计时（秒）")]
+    public int level5CountdownSeconds = 300;
     // 移除第四关和第五关倒计时
 
     private int currentQuestionIndex = 0;
@@ -560,38 +565,50 @@ public class UIInterface : MonoBehaviour
             AIChatManager.Instance.HideChat();
 
         // 合并：第四/五关显示通用答题界面
-        if (pendingLevel == 4 || pendingLevel == 5)
-        {
-            // 新增：显示对应关卡物体集合并确保Renderer启用
-            if (pendingLevel == 4 && level4Objects != null)
-            {
-                level4Objects.SetActive(true);
-                SetObjectVisible(level4Objects, true); // 确保所有Renderer启用
-                // 开始关卡挑战后，对应关卡模型位置移动效果
-                level4Objects.transform.position = level4InitialPos;
-                if (level4MoveCoroutine != null) StopCoroutine(level4MoveCoroutine);
-                level4MoveCoroutine = StartCoroutine(MoveZToTarget(level4Objects.transform, -8.18f, 2.0f));
-            }
-            else if (pendingLevel == 5 && level5Objects != null)
-            {
-                level5Objects.SetActive(true);
-                SetObjectVisible(level5Objects, true); // 确保所有Renderer启用
-                level5Objects.transform.position = level5InitialPos;
-                if (level5MoveCoroutine != null) StopCoroutine(level5MoveCoroutine);
-                level5MoveCoroutine = StartCoroutine(MoveZToTarget(level5Objects.transform, -7f, 2.0f));
-            }
+        //if (pendingLevel == 4)
+        //{
+        //    // 新增：显示对应关卡物体集合并确保Renderer启用
+        //    if (pendingLevel == 4 && level4Objects != null)
+        //    {
+        //        level4Objects.SetActive(true);
+        //        SetObjectVisible(level4Objects, true); // 确保所有Renderer启用
+        //        // 开始关卡挑战后，对应关卡模型位置移动效果
+        //        level4Objects.transform.position = level4InitialPos;
+        //        if (level4MoveCoroutine != null) StopCoroutine(level4MoveCoroutine);
+        //        level4MoveCoroutine = StartCoroutine(MoveZToTarget(level4Objects.transform, -8.18f, 2.0f));
+        //    }
 
-            if (levelQuizPanel != null)
-            {
-                levelQuizPanel.SetActive(true);
-                currentQuizIndex = 0;
-                ShowLevelQuizPanel(pendingLevel);
-            }
-            return;
-        }
+        //    if (levelQuizPanel != null)
+        //    {
+        //        levelQuizPanel.SetActive(true);
+        //        currentQuizIndex = 0;
+        //        ShowLevelQuizPanel(pendingLevel);
+        //    }
+        //    return;
+        //}
+        //if (pendingLevel == 5)
+        //{
+        //    if (pendingLevel == 5 && level5Objects != null)
+        //    {
+        //        level5Objects.SetActive(true);
+        //        SetObjectVisible(level5Objects, true); // 确保所有Renderer启用
+        //        level5Objects.transform.position = level5InitialPos;
+        //        if (level5MoveCoroutine != null) StopCoroutine(level5MoveCoroutine);
+        //        level5MoveCoroutine = StartCoroutine(MoveZToTarget(level5Objects.transform, -7f, 2.0f));
+        //    }
+        //    //if (levelQuizPanel != null)
+        //    //{
+        //    //    levelQuizPanel.SetActive(true);
+        //    //    currentQuizIndex = 0;
+        //    //    ShowLevelQuizPanel(pendingLevel);
+        //    //}
+        //    if (backButton != null) backButton.gameObject.SetActive(false);
+        //    ShowLevelQuizResultPanel(5);
+        //    return;
+        //}
 
         // 原有逻辑处理前三关
-        if (pendingLevel == 1 || pendingLevel == 2 || pendingLevel == 3)
+        if (pendingLevel == 1 || pendingLevel == 2 || pendingLevel == 3 || pendingLevel == 5 || pendingLevel == 4)
         {
             StartLevelCountdown(pendingLevel);
         }
@@ -606,6 +623,8 @@ public class UIInterface : MonoBehaviour
         int levelSeconds = level1CountdownSeconds;
         if (level == 2) levelSeconds = level2CountdownSeconds;
         else if (level == 3) levelSeconds = level3CountdownSeconds;
+        else if (level == 4) levelSeconds = level4CountdownSeconds;
+        else if (level == 5) levelSeconds = level5CountdownSeconds;
 
         if (levelCountdownCoroutine != null) StopCoroutine(levelCountdownCoroutine);
         levelCountdownCoroutine = StartCoroutine(LevelCountdown(levelSeconds));
@@ -640,7 +659,9 @@ public class UIInterface : MonoBehaviour
     {
         return (level1Objects != null && level1Objects.activeSelf) ||
                (level2Objects != null && level2Objects.activeSelf) ||
-               (level3Objects != null && level3Objects.activeSelf);
+               (level3Objects != null && level3Objects.activeSelf) ||
+               (level4Objects != null && level4Objects.activeSelf) ||
+               (level5Objects != null && level5Objects.activeSelf);
     }
 
     // 修改ShowLevelModel，关卡完成时关闭倒计时面板
@@ -659,6 +680,14 @@ public class UIInterface : MonoBehaviour
             case 3:
                 if (level3Objects != null) level3Objects.SetActive(true);
                 SetObjectVisible(level3Objects, true);
+                break;
+            case 4:
+                if (level4Objects != null) level4Objects.SetActive(true);
+                SetObjectVisible(level4Objects, true);
+                break;
+            case 5:
+                if (level5Objects != null) level5Objects.SetActive(true);
+                SetObjectVisible(level5Objects, true);
                 break;
         }
         Debug.Log($"正式进入关卡 {level}");
@@ -693,12 +722,13 @@ public class UIInterface : MonoBehaviour
             if (level3Objects != null) level3Objects.SetActive(false);
             if (level4Objects != null) level4Objects.SetActive(false);
             if (level5Objects != null) level5Objects.SetActive(false);
+            if(level4ObjectsAlt != null) level4ObjectsAlt.SetActive(false);
             // 复原当前关卡物体集合的旋转
             GameObject targetObj = null;
             if (currentLevel == 1) targetObj = level1Objects;
             else if (currentLevel == 2) targetObj = level2Objects;
             else if (currentLevel == 3) targetObj = level3Objects;
-            else if (currentLevel == 4) targetObj = level4Objects;
+            else if (currentLevel == 4) targetObj = level4ObjectsAlt;
             else if (currentLevel == 5) targetObj = level5Objects;
             if (targetObj != null)
                 targetObj.transform.rotation = originalModelRotation;
@@ -862,7 +892,11 @@ public class UIInterface : MonoBehaviour
         if (currentLevel == 1) targetObj = level1Objects;
         else if (currentLevel == 2) targetObj = level2Objects;
         else if (currentLevel == 3) targetObj = level3Objects;
-        else if (currentLevel == 4) targetObj = level4Objects;
+        else if (currentLevel == 4) {
+            level4Objects.SetActive(false);
+            level4ObjectsAlt.SetActive(true);
+            targetObj = level4ObjectsAlt; 
+        }
         else if (currentLevel == 5) targetObj = level5Objects;
         if (targetObj != null)
             originalModelRotation = targetObj.transform.rotation;
@@ -888,7 +922,7 @@ public class UIInterface : MonoBehaviour
             else if (currentLevel == 2) targetObj = level2Objects;
             else if (currentLevel == 3) targetObj = level3Objects;
             // 新增：支持第四/五关
-            else if (currentLevel == 4) targetObj = level4Objects;
+            else if (currentLevel == 4) targetObj = level4ObjectsAlt;
             else if (currentLevel == 5) targetObj = level5Objects;
 
             if (targetObj != null)

@@ -3626,6 +3626,7 @@ MonoBehaviour:
     initialPosition: {x: 0, y: 0, z: 0}
     initialRotation: {x: 0, y: 0, z: 0, w: 0}
     triggerInitialEnabled: 0
+  level5Steps: []
   canDrag: 1
 --- !u!4 &415926792
 Transform:
@@ -4612,6 +4613,8 @@ MonoBehaviour:
   level1CountdownSeconds: 20
   level2CountdownSeconds: 30
   level3CountdownSeconds: 60
+  level4CountdownSeconds: 300
+  level5CountdownSeconds: 300
   level4ObjectShow: {fileID: 211906655}
   level5ObjectShow: {fileID: 1599339653}
   currentLevelText: {fileID: 116368492}
