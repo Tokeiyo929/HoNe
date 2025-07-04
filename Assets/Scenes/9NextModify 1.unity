@@ -5629,7 +5629,7 @@ MonoBehaviour:
   - image: {fileID: 21300000, guid: 81d618486c6dc994c81964624dc7c365, type: 3}
     intro: "\u8170\u690E\u662F\u4EBA\u4F53\u9AA8\u9ABC\u6784\u9020\u4E2D\uFF0C\u7EC4\u6210\u810A\u690E\u7684\u4E09\u5927\u90E8\u5206\u4E4B\u4E00\uFF0C\u5171\u67095\u4E2A\uFF0C\u6BCF\u4E00\u4E2A\u8170\u690E\u90FD\u7531\u524D\u65B9\u7684\u690E\u4F53\u548C\u540E\u65B9\u7684\u9644\u4EF6\u7EC4\u6210\u3002\r"
   - image: {fileID: 21300000, guid: 2e6fd0e041297af40bf30780cee504aa, type: 3}
-    intro: "\u810A\u690E\u9AA8\u662F\u690E\u9AA8\u7684\u901A\u79F0\uFF0C\u662F\u4E2D\u8F74\u9AA8\uFF0C\u4F4D\u4E8E\u5934\u9885\u548C\u4E0B\u80A2\u4E4B\u95F4\uFF0C\u8D77\u5230\u4E2D\u95F4\u6865\u6881\u7684\u4F5C\u7528\uFF0C\u501F\u97E7\u5E26\u3001\u5173\u8282\u53CA\u690E\u95F4\u76D8\u8FDE\u63A5\u800C\u6210\u3002\r"
+    intro: "\n\u810A\u690E\u9AA8\u662F\u690E\u9AA8\u7684\u901A\u79F0\uFF0C\u662F\u4E2D\u8F74\u9AA8\uFF0C\u4F4D\u4E8E\u5934\u9885\u548C\u4E0B\u80A2\u4E4B\u95F4\uFF0C\u8D77\u5230\u4E2D\u95F4\u6865\u6881\u7684\u4F5C\u7528\uFF0C\u501F\u97E7\u5E26\u3001\u5173\u8282\u53CA\u690E\u95F4\u76D8\u8FDE\u63A5\u800C\u6210\u3002\r"
   - image: {fileID: 21300000, guid: 84f1213f9916ff942b615995d85038bc, type: 3}
     intro: "L1-L2\u795E\u7ECF\u63A7\u5236\u4E0B\u8179\u90E8\u3001\u8179\u80A1\u6C9F\u53CA\u5927\u817F\u4E0A\u5185\u4FA7\u3002L3\u795E\u7ECF\u63A7\u5236\u5927\u817F\u524D\u4FA7\u81F3\u819D\u76D6\u5185\u4FA7\u3002L4\u795E\u7ECF\u63A7\u5236\u5C0F\u817F\u5185\u4FA7\u3001\u8DB3\u5185\u4FA7\u53CA\u8DB3\u80CC\u3002L5\u795E\u7ECF\u63A7\u5236\u5C0F\u817F\u5916\u4FA7\u3001\u8DB3\u80CC\u53CA\u7B2C1-3\u8DBE\u3002S1-S2\u795E\u7ECF\u63A7\u5236\u8DB3\u5E95\u3001\u8DB3\u5916\u4FA7\u53CA\u4F1A\u9634\u533A\u3002\r\r"
   - image: {fileID: 21300000, guid: 945cbcb1e8334b84f861f802cdff8b7b, type: 3}
@@ -5763,7 +5763,7 @@ MonoBehaviour:
   level2CountdownSeconds: 30
   level3CountdownSeconds: 60
   level4CountdownSeconds: 60
-  level5CountdownSeconds: 3000
+  level5CountdownSeconds: 60
   level4ObjectShow: {fileID: 211906655}
   level5ObjectShow: {fileID: 1599339653}
   currentLevelText: {fileID: 116368492}
@@ -14718,8 +14718,8 @@ Transform:
   m_GameObject: {fileID: 1202462300}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -360, y: -636, z: 20}
-  m_LocalScale: {x: 0.8, y: 0.8, z: 1}
+  m_LocalPosition: {x: -360, y: -635, z: 20}
+  m_LocalScale: {x: 1, y: 1.2, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 655840865}
@@ -14765,7 +14765,7 @@ SpriteRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 0
-  m_Sprite: {fileID: 21300000, guid: 9627e3d78591d2d4c95bfad4c5e41be2, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 34c30130e196f0245897d218aceea458, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 0.39215687}
   m_FlipX: 0
   m_FlipY: 0
@@ -18065,7 +18065,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!4 &1556756989
 Transform:
   m_ObjectHideFlags: 0

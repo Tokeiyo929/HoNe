@@ -16,53 +16,52 @@ public class Touch : MonoBehaviour
         [HideInInspector] public Quaternion initialRotation;
         [HideInInspector] public bool triggerInitialEnabled;
         [HideInInspector] public bool isCompleted;
+        [HideInInspector] public GameObject occupiedObject; // 当前占用此格子的拼图
     }
 
-    [Header("第一关拖拽步骤")]
     public List<DragStep> level1Steps = new List<DragStep>();
-    [Header("第二关拖拽步骤（todo）")]
     public List<DragStep> level2Steps = new List<DragStep>();
-    [Header("第三关拖拽步骤（todo）")]
     public List<DragStep> level3Steps = new List<DragStep>();
-    [Header("第四关拖拽步骤（todo）")]
     public List<DragStep> level4Steps = new List<DragStep>();
-    [Header("第五关拖拽步骤（todo）")]
     public List<DragStep> level5Steps = new List<DragStep>();
-    private List<DragStep> dragSteps = new List<DragStep>(); // 当前关卡拖拽步骤
-    private int currentStep = 0; // 当前步骤索引
+
+    private List<DragStep> dragSteps = new List<DragStep>();
+    private int currentStep = 0;
     private Transform selectedObject = null;
     private Vector3 offset;
     private float zCoord;
+    private float initialZ;
     private bool isMovingToTarget = false;
-    // 新增：记录所有可拖拽物体
+    private bool isFoorLevel = false;
+
     private List<GameObject> draggableObjects = new List<GameObject>();
-    // 新增：记录每个物体初始位置和旋转（便于回退）
     private Dictionary<GameObject, Vector3> initialPositions = new Dictionary<GameObject, Vector3>();
     private Dictionary<GameObject, Quaternion> initialRotations = new Dictionary<GameObject, Quaternion>();
-    // 关卡完成事件（参数：是否成功）
+    private Dictionary<GameObject, DragStep> objectToStepMap = new Dictionary<GameObject, DragStep>();
+
     public Action<bool> OnLevelFinished;
+    public bool canDrag = true;
 
-    public bool canDrag = true; // 控制是否可以拖拽
-
-    private bool isFoorLevel = false;
     void Start()
     {
-        SetLevel(1); // 默认第一关
+        SetLevel(1);
     }
 
-    // 切换关卡时调用，设置当前关卡的拖拽步骤
     public void SetLevel(int level)
     {
         switch (level)
         {
             case 1:
                 dragSteps = level1Steps;
+                isFoorLevel = false;
                 break;
             case 2:
                 dragSteps = level2Steps;
+                isFoorLevel = false;
                 break;
             case 3:
                 dragSteps = level3Steps;
+                isFoorLevel = false;
                 break;
             case 4:
                 dragSteps = level4Steps;
@@ -70,15 +69,20 @@ public class Touch : MonoBehaviour
                 break;
             case 5:
                 dragSteps = level5Steps;
+                isFoorLevel = false;
                 break;
             default:
                 dragSteps = new List<DragStep>();
+                isFoorLevel = false;
                 break;
         }
-        // 记录初始状态
+
+        objectToStepMap.Clear();
+
         foreach (var step in dragSteps)
         {
             step.isCompleted = false;
+            step.occupiedObject = null;
             if (step.draggableObject != null)
             {
                 step.initialPosition = step.draggableObject.transform.position;
@@ -89,13 +93,15 @@ public class Touch : MonoBehaviour
                 step.triggerInitialEnabled = step.targetTrigger.enabled;
             }
         }
+
         currentStep = 0;
         selectedObject = null;
         isMovingToTarget = false;
-        // 记录所有可拖拽物体
+
         draggableObjects.Clear();
         initialPositions.Clear();
         initialRotations.Clear();
+
         foreach (var step in dragSteps)
         {
             if (step.draggableObject != null && !draggableObjects.Contains(step.draggableObject))
@@ -105,10 +111,8 @@ public class Touch : MonoBehaviour
                 initialRotations[step.draggableObject] = step.draggableObject.transform.rotation;
             }
         }
-        // TODO: 可在此处重置关卡相关状态
     }
 
-    // 重置当前关卡所有物体和Trigger状态
     public void ResetLevel()
     {
         foreach (var step in dragSteps)
@@ -122,11 +126,16 @@ public class Touch : MonoBehaviour
             {
                 step.targetTrigger.enabled = step.triggerInitialEnabled;
             }
+            step.occupiedObject = null;
+            step.isCompleted = false;
         }
-        // 恢复所有可拖拽物体
+
+        objectToStepMap.Clear();
+
         draggableObjects.Clear();
         initialPositions.Clear();
         initialRotations.Clear();
+
         foreach (var step in dragSteps)
         {
             if (step.draggableObject != null && !draggableObjects.Contains(step.draggableObject))
@@ -136,37 +145,25 @@ public class Touch : MonoBehaviour
                 initialRotations[step.draggableObject] = step.initialRotation;
             }
         }
+
         currentStep = 0;
         selectedObject = null;
         isMovingToTarget = false;
+
         StopAllCoroutines();
     }
-    private float initialZ; // 记录拖拽物体的初始 Z 坐标
+
     void Update()
     {
-        if (currentStep >= dragSteps.Count)
-        {
-            // 关卡完成
-            if (OnLevelFinished != null)
-            {
-                OnLevelFinished.Invoke(true);
-                OnLevelFinished = null; // 防止多次调用
-            }
-            return;
-        }
-
-        if (!canDrag) return; // 新增：判断是否可以拖拽
-        if (isMovingToTarget) return; // 正在自动移动，禁止操作
+        if (IsLevelComplete()) return;
+        if (!canDrag || isMovingToTarget) return;
 
 #if UNITY_EDITOR
-        // 鼠标操作（编辑器测试用）
         if (Input.GetMouseButtonDown(0))
         {
             Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
-            RaycastHit hit;
-            if (Physics.Raycast(ray, out hit))
+            if (Physics.Raycast(ray, out RaycastHit hit))
             {
-                // 判断是否为任意可拖拽物体
                 if (draggableObjects.Contains(hit.transform.gameObject))
                 {
                     selectedObject = hit.transform;
@@ -174,7 +171,6 @@ public class Touch : MonoBehaviour
                     Vector3 mousePoint = Input.mousePosition;
                     mousePoint.z = zCoord;
                     offset = selectedObject.position - Camera.main.ScreenToWorldPoint(mousePoint);
-                    // 记录初始 Z 坐标
                     initialZ = selectedObject.position.z;
                 }
             }
@@ -184,159 +180,192 @@ public class Touch : MonoBehaviour
             Vector3 mousePoint = Input.mousePosition;
             mousePoint.z = zCoord;
             Vector3 newPosition = Camera.main.ScreenToWorldPoint(mousePoint) + offset;
-            // 保持 Z 坐标不变，仅更新 XY
             newPosition.z = initialZ;
             selectedObject.position = newPosition;
         }
-        else if (Input.GetMouseButtonUp(0))
+        else if (Input.GetMouseButtonUp(0) && selectedObject != null)
         {
-            selectedObject = null;
-        }
-#else
-    // 触摸操作（Android等移动端）
-    if (Input.touchCount > 0)
-    {
-        UnityEngine.Touch touch = Input.GetTouch(0);
-        Vector3 touchPos = touch.position;
-        if (touch.phase == TouchPhase.Began)
-        {
-            Ray ray = Camera.main.ScreenPointToRay(touchPos);
-            RaycastHit hit;
-            if (Physics.Raycast(ray, out hit))
+            if (isFoorLevel)
             {
-                if (hit.transform.gameObject.layer == 6)
-                {
-                    hit.transform.localScale = Vector3.one;
-                }
-                if (draggableObjects.Contains(hit.transform.gameObject))
-                {
-                    selectedObject = hit.transform;
-                    zCoord = Camera.main.WorldToScreenPoint(selectedObject.position).z;
-                    touchPos.z = zCoord;
-                    offset = selectedObject.position - Camera.main.ScreenToWorldPoint(touchPos);
-                    // 记录初始 Z 坐标
-                    initialZ = selectedObject.position.z;
-                }
+                HandleReleaseForFourthLevel();
+            }
+            else
+            {
+                HandleReleaseForOtherLevels();
             }
         }
-        else if (touch.phase == TouchPhase.Moved && selectedObject != null)
-        {
-            touchPos.z = zCoord;
-            Vector3 newPosition = Camera.main.ScreenToWorldPoint(touchPos) + offset;
-            // 保持 Z 坐标不变，仅更新 XY
-            newPosition.z = initialZ;
-            selectedObject.position = newPosition;
-        }
-        else if (touch.phase == TouchPhase.Ended || touch.phase == TouchPhase.Canceled)
-        {
-            selectedObject = null;
-        }
-    }
 #endif
     }
 
-    void FixedUpdate()
+    private void HandleReleaseForFourthLevel()
     {
-        if (IsLevelComplete()) return;
-        if (selectedObject == null) return;
-        if (isMovingToTarget) return;
+        Collider selectedCol = selectedObject.GetComponent<Collider>();
+        if (selectedCol == null) return;
 
-        Collider objCol = selectedObject.GetComponent<Collider>();
-        if (objCol == null) return;
+        bool placed = false;
 
-        // 第四关特殊处理：不按顺序，任意物体可以放置到任意目标位置
-        if (isFoorLevel)
+        foreach (var step in dragSteps)
         {
-            foreach (var step in dragSteps)
+            if (step.targetTrigger != null)
             {
-                if (!step.isCompleted && step.targetTrigger != null && objCol.bounds.Intersects(step.targetTrigger.bounds))
+                // 判断是否与格子碰撞盒重叠
+                if (selectedCol.bounds.Intersects(step.targetTrigger.bounds))
                 {
-                    // 检查是否是当前物体的目标位置
-                    bool isCorrectPlacement = (selectedObject.gameObject == step.draggableObject);
-
-                    if (isCorrectPlacement)
+                    // 如果此格子被其他拼图占用，释放那个拼图回原位
+                    if (step.occupiedObject != null && step.occupiedObject != selectedObject.gameObject)
                     {
-                        step.targetTrigger.enabled = false;
-                        step.isCompleted = true;
-                        StartCoroutine(MoveToTarget(selectedObject, step.targetPosition.position, step.targetPosition.rotation));
-
-                        if (AIChatManager.Instance != null)
-                            AIChatManager.Instance.ShowDragRightChat();
+                        GameObject oldObj = step.occupiedObject;
+                        StartCoroutine(MoveToInitialPosition(oldObj.transform));
+                        objectToStepMap.Remove(oldObj);
+                        draggableObjects.Add(oldObj);
                     }
-                    else
+
+                    // 清除当前物体旧占用格子信息
+                    if (objectToStepMap.TryGetValue(selectedObject.gameObject, out DragStep oldStep))
                     {
-                        //StartCoroutine(MoveToInitialPosition(selectedObject));
-                        //selectedObject = null;
-
-                        //if (AIChatManager.Instance != null)
-                        //    AIChatManager.Instance.ShowDragWrongChat();
+                        oldStep.occupiedObject = null;
+                        oldStep.targetTrigger.enabled = true;
+                        objectToStepMap.Remove(selectedObject.gameObject);
                     }
-                    return;
+
+                    // 占用当前格子
+                    step.occupiedObject = selectedObject.gameObject;
+                    step.targetTrigger.enabled = false;
+                    objectToStepMap[selectedObject.gameObject] = step;
+
+                    StartCoroutine(MoveToTarget(selectedObject, step.targetPosition.position, step.targetPosition.rotation));
+
+                    if (AIChatManager.Instance != null)
+                        AIChatManager.Instance.ShowDragRightChat();
+
+                    placed = true;
+                    break;
                 }
+            }
+        }
+
+        if (!placed)
+        {
+            StartCoroutine(MoveToInitialPosition(selectedObject));
+        }
+
+        selectedObject = null;
+    }
+
+    private void HandleReleaseForOtherLevels()
+    {
+        Collider selectedCol = selectedObject.GetComponent<Collider>();
+        if (selectedCol == null) return;
+
+        var step = dragSteps[currentStep];
+
+        if (selectedObject.gameObject == step.draggableObject)
+        {
+            if (step.targetTrigger != null && selectedCol.bounds.Intersects(step.targetTrigger.bounds))
+            {
+                step.targetTrigger.enabled = false;
+                step.isCompleted = true;
+
+                StartCoroutine(MoveToTarget(selectedObject, step.targetPosition.position, step.targetPosition.rotation));
+
+                if (AIChatManager.Instance != null)
+                    AIChatManager.Instance.ShowDragRightChat();
+
+                currentStep++;
+            }
+            else
+            {
+                StartCoroutine(MoveToInitialPosition(selectedObject));
+
+                if (AIChatManager.Instance != null)
+                    AIChatManager.Instance.ShowDragWrongChat();
             }
         }
         else
         {
-            // 其他关卡按原顺序处理
-            var step = dragSteps[currentStep];
-            if (selectedObject.gameObject == step.draggableObject)
+            if (step.targetTrigger != null && selectedCol.bounds.Intersects(step.targetTrigger.bounds))
             {
-                if (step.targetTrigger != null && objCol.bounds.Intersects(step.targetTrigger.bounds))
-                {
-                    step.targetTrigger.enabled = false;
-                    step.isCompleted = true;
-                    StartCoroutine(MoveToTarget(step.draggableObject.transform, step.targetPosition.position, step.targetPosition.rotation));
+                StartCoroutine(MoveToInitialPosition(selectedObject));
 
-                    if (AIChatManager.Instance != null)
-                        AIChatManager.Instance.ShowDragRightChat();
-                }
+                if (AIChatManager.Instance != null)
+                    AIChatManager.Instance.ShowDragWrongChat();
             }
             else
             {
-                if (step.targetTrigger != null && objCol.bounds.Intersects(step.targetTrigger.bounds))
-                {
-                    StartCoroutine(MoveToInitialPosition(selectedObject));
-                    selectedObject = null;
-
-                    if (AIChatManager.Instance != null)
-                        AIChatManager.Instance.ShowDragWrongChat();
-                }
+                StartCoroutine(MoveToInitialPosition(selectedObject));
             }
         }
+
+        selectedObject = null;
     }
+
+    //void FixedUpdate()
+    //{
+    //    if (IsLevelComplete()) return;
+    //    if (selectedObject == null) return;
+    //    if (isMovingToTarget) return;
+
+    //    Collider objCol = selectedObject.GetComponent<Collider>();
+    //    if (objCol == null) return;
+
+    //    if (!isFoorLevel)
+    //    {
+    //        var step = dragSteps[currentStep];
+    //        if (selectedObject.gameObject == step.draggableObject)
+    //        {
+    //            if (step.targetTrigger != null && objCol.bounds.Intersects(step.targetTrigger.bounds))
+    //            {
+    //                step.targetTrigger.enabled = false;
+    //                step.isCompleted = true;
+    //                StartCoroutine(MoveToTarget(selectedObject, step.targetPosition.position, step.targetPosition.rotation));
+
+    //                if (AIChatManager.Instance != null)
+    //                    AIChatManager.Instance.ShowDragRightChat();
+    //            }
+    //        }
+    //        else
+    //        {
+    //            if (step.targetTrigger != null && objCol.bounds.Intersects(step.targetTrigger.bounds))
+    //            {
+    //                StartCoroutine(MoveToInitialPosition(selectedObject));
+    //                selectedObject = null;
+
+    //                if (AIChatManager.Instance != null)
+    //                    AIChatManager.Instance.ShowDragWrongChat();
+    //            }
+    //        }
+    //    }
+    //}
 
     private bool IsLevelComplete()
     {
         if (isFoorLevel)
         {
-            // 第四关：检查所有步骤是否完成
             foreach (var step in dragSteps)
             {
-                if (!step.isCompleted)
+                if (step.occupiedObject != step.draggableObject)
                     return false;
             }
             return true;
         }
         else
         {
-            // 其他关卡：按顺序检查
             return currentStep >= dragSteps.Count;
         }
     }
 
-    // 新增：平滑将物体回到初始位置
     private IEnumerator MoveToInitialPosition(Transform obj)
     {
-        if(obj.gameObject.layer == 6)
-        {
-            obj.localScale = new Vector3(0.5f,0.5f,0.5f); // 重置缩放
-        }
+        if (obj.gameObject.layer == 6)
+            obj.localScale = new Vector3(0.5f, 0.5f, 0.5f);
+
         isMovingToTarget = true;
         Vector3 startPos = obj.position;
         Quaternion startRot = obj.rotation;
-        Vector3 targetPos = initialPositions.ContainsKey(obj.gameObject) ? initialPositions[obj.gameObject] : startPos;
-        Quaternion targetRot = initialRotations.ContainsKey(obj.gameObject) ? initialRotations[obj.gameObject] : startRot;
-        float t = 0;
+        Vector3 targetPos = initialPositions[obj.gameObject];
+        Quaternion targetRot = initialRotations[obj.gameObject];
+
+        float t = 0f;
         while (t < 1f)
         {
             t += Time.deltaTime * 3f;
@@ -344,18 +373,20 @@ public class Touch : MonoBehaviour
             obj.rotation = Quaternion.Slerp(startRot, targetRot, t);
             yield return null;
         }
+
         obj.position = targetPos;
         obj.rotation = targetRot;
+
         isMovingToTarget = false;
     }
 
-    // 自动移动物体到目标位置与旋转
     private IEnumerator MoveToTarget(Transform obj, Vector3 targetPos, Quaternion targetRot)
     {
         isMovingToTarget = true;
-        float t = 0;
         Vector3 startPos = obj.position;
         Quaternion startRot = obj.rotation;
+
+        float t = 0f;
         while (t < 1f)
         {
             t += Time.deltaTime * 3f;
@@ -363,19 +394,17 @@ public class Touch : MonoBehaviour
             obj.rotation = Quaternion.Slerp(startRot, targetRot, t);
             yield return null;
         }
+
         obj.position = targetPos;
         obj.rotation = targetRot;
+
         selectedObject = null;
         isMovingToTarget = false;
-        // 移除已吸附物体，不可再拖拽
-        draggableObjects.Remove(obj.gameObject);
-        currentStep++; // 允许下一个物体拖拽
-        // 判断关卡是否完成
-        if (currentStep >= dragSteps.Count && OnLevelFinished != null)
+
+        if (IsLevelComplete() && OnLevelFinished != null)
         {
             OnLevelFinished.Invoke(true);
             OnLevelFinished = null;
         }
-        // TODO: 可在此处判断关卡是否完成并触发后续逻辑
     }
 }
