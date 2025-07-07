@@ -194,6 +194,54 @@ public class Touch : MonoBehaviour
                 HandleReleaseForOtherLevels();
             }
         }
+#else
+    // 触摸操作（Android等移动端）
+    if (Input.touchCount > 0)
+    {
+        UnityEngine.Touch touch = Input.GetTouch(0);
+        Vector3 touchPos = touch.position;
+        if (touch.phase == TouchPhase.Began){
+        
+            Ray ray = Camera.main.ScreenPointToRay(touchPos);
+            RaycastHit hit;
+            if (Physics.Raycast(ray, out hit))
+            {
+                if (hit.transform.gameObject.layer == 6)
+                {                    hit.transform.localScale = Vector3.one;
+                }
+                if (draggableObjects.Contains(hit.transform.gameObject))
+                {
+                    selectedObject = hit.transform;
+                    zCoord = Camera.main.WorldToScreenPoint(selectedObject.position).z;
+                    touchPos.z = zCoord;
+                    offset = selectedObject.position - Camera.main.ScreenToWorldPoint(touchPos);
+                    // 记录初始 Z 坐标
+                    initialZ = selectedObject.position.z;
+                }            }
+        }
+        else if (touch.phase == TouchPhase.Moved && selectedObject != null)
+{
+    touchPos.z = zCoord;
+    Vector3 newPosition = Camera.main.ScreenToWorldPoint(touchPos) + offset;
+    newPosition.z = initialZ;  // 明确保持Z坐标不变
+    selectedObject.position = newPosition;
+}
+else if (touch.phase == TouchPhase.Ended || touch.phase == TouchPhase.Canceled)
+{
+    if (selectedObject != null)
+    {
+        if (isFoorLevel)
+        {
+            HandleReleaseForFourthLevel();
+        }
+        else
+        {
+            HandleReleaseForOtherLevels();
+        }
+        selectedObject = null;
+    }
+}
+    }
 #endif
     }
 
@@ -235,8 +283,8 @@ public class Touch : MonoBehaviour
 
                     StartCoroutine(MoveToTarget(selectedObject, step.targetPosition.position, step.targetPosition.rotation));
 
-                    if (AIChatManager.Instance != null)
-                        AIChatManager.Instance.ShowDragRightChat();
+                    //if (AIChatManager.Instance != null)
+                    //    AIChatManager.Instance.ShowDragRightChat();
 
                     placed = true;
                     break;
@@ -253,51 +301,57 @@ public class Touch : MonoBehaviour
     }
 
     private void HandleReleaseForOtherLevels()
+{
+    Collider selectedCol = selectedObject.GetComponent<Collider>();
+    if (selectedCol == null) return;
+
+    var step = dragSteps[currentStep];
+
+    if (selectedObject.gameObject == step.draggableObject)
     {
-        Collider selectedCol = selectedObject.GetComponent<Collider>();
-        if (selectedCol == null) return;
-
-        var step = dragSteps[currentStep];
-
-        if (selectedObject.gameObject == step.draggableObject)
+        if (step.targetTrigger != null && selectedCol.bounds.Intersects(step.targetTrigger.bounds))
         {
-            if (step.targetTrigger != null && selectedCol.bounds.Intersects(step.targetTrigger.bounds))
+            step.targetTrigger.enabled = false;
+            step.isCompleted = true;
+
+            // 从可拖拽列表中移除该物体，防止再次拖拽
+            if (draggableObjects.Contains(selectedObject.gameObject))
             {
-                step.targetTrigger.enabled = false;
-                step.isCompleted = true;
-
-                StartCoroutine(MoveToTarget(selectedObject, step.targetPosition.position, step.targetPosition.rotation));
-
-                if (AIChatManager.Instance != null)
-                    AIChatManager.Instance.ShowDragRightChat();
-
-                currentStep++;
+                draggableObjects.Remove(selectedObject.gameObject);
             }
-            else
-            {
-                StartCoroutine(MoveToInitialPosition(selectedObject));
 
-                if (AIChatManager.Instance != null)
-                    AIChatManager.Instance.ShowDragWrongChat();
-            }
+            StartCoroutine(MoveToTarget(selectedObject, step.targetPosition.position, step.targetPosition.rotation));
+
+            if (AIChatManager.Instance != null)
+                AIChatManager.Instance.ShowDragRightChat();
+
+            currentStep++;
         }
         else
         {
-            if (step.targetTrigger != null && selectedCol.bounds.Intersects(step.targetTrigger.bounds))
-            {
-                StartCoroutine(MoveToInitialPosition(selectedObject));
+            StartCoroutine(MoveToInitialPosition(selectedObject));
 
-                if (AIChatManager.Instance != null)
-                    AIChatManager.Instance.ShowDragWrongChat();
-            }
-            else
-            {
-                StartCoroutine(MoveToInitialPosition(selectedObject));
-            }
+            if (AIChatManager.Instance != null)
+                AIChatManager.Instance.ShowDragWrongChat();
         }
-
-        selectedObject = null;
     }
+    else
+    {
+        if (step.targetTrigger != null && selectedCol.bounds.Intersects(step.targetTrigger.bounds))
+        {
+            StartCoroutine(MoveToInitialPosition(selectedObject));
+
+            if (AIChatManager.Instance != null)
+                AIChatManager.Instance.ShowDragWrongChat();
+        }
+        else
+        {
+            StartCoroutine(MoveToInitialPosition(selectedObject));
+        }
+    }
+
+    selectedObject = null;
+}
 
     //void FixedUpdate()
     //{
