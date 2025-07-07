@@ -411,7 +411,18 @@ else if (touch.phase == TouchPhase.Ended || touch.phase == TouchPhase.Canceled)
     private IEnumerator MoveToInitialPosition(Transform obj)
     {
         if (obj.gameObject.layer == 6)
-            obj.localScale = new Vector3(0.5f, 0.5f, 0.5f);
+        {
+            ResetScale resetScale = obj.gameObject.GetComponent<ResetScale>();
+            if (resetScale != null)
+            {
+                resetScale.SetScale();
+            }
+            else
+            {
+                obj.localScale = new Vector3(0.5f, 0.5f, 0.5f);
+            }
+        }
+            
 
         isMovingToTarget = true;
         Vector3 startPos = obj.position;
