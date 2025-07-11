@@ -691,6 +691,9 @@ public class UIInterface : MonoBehaviour
                 break;
         }
         Debug.Log($"正式进入关卡 {level}");
+        //给第四关单独加一个关卡提示
+        if (AIChatManager.Instance != null && level == 4)
+            AIChatManager.Instance.ShowLevel4Chat();
         // 初始化关卡拖拽逻辑
         if (touchScript != null)
         {

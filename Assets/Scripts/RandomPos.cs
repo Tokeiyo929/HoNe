@@ -23,7 +23,7 @@ public class RandomObjectArranger : MonoBehaviour
     // X坐标值
     private float[] xPositions = new float[] { -1.75f, -1.25f, -0.75f, -0.25f, 0.25f, 0.75f, 1.25f, 1.75f };
     // Y坐标值（两排）
-    private float[] yPositions = new float[] { 7f, 7.5f };
+    private float[] yPositions = new float[] { 1.75f, 2.25f };
 
     void OnEnable()
     {
@@ -57,7 +57,7 @@ public class RandomObjectArranger : MonoBehaviour
         {
             if (index >= objects.Count) return;
             objects[index].transform.localPosition = new Vector3(xPositions[col], yPositions[0], 0);
-            objects[index].transform.localScale = new Vector3(0.5f, 0.5f, 0.5f);
+            objects[index].transform.localScale = new Vector3(0.4f, 0.4f, 1f);
             index++;
         }
 
@@ -66,7 +66,7 @@ public class RandomObjectArranger : MonoBehaviour
         {
             if (index >= objects.Count) return;
             objects[index].transform.localPosition = new Vector3(xPositions[col], yPositions[1], 0);
-            objects[index].transform.localScale = new Vector3(0.5f, 0.5f, 0.5f);
+            objects[index].transform.localScale = new Vector3(0.4f, 0.4f, 1f);
             index++;
         }
     }

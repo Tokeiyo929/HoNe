@@ -54,6 +54,12 @@ public class AIChatManager : MonoBehaviour
         if (chatPanel != null) chatPanel.SetActive(true);
         if (chatText != null) chatText.text = content;
     }
+    //新增第四关专属提示
+    public void ShowLevel4Chat()
+    {
+        if (chatPanel != null) chatPanel.SetActive(true);
+        if (chatText != null) chatText.text = "请拖动上方拼图碎片拼出整体的腰椎神经分布图。";
+    }
 
     /// <summary>
     /// 隐藏聊天面板
