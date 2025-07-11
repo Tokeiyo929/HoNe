@@ -24,6 +24,14 @@ public class AIChatManager : MonoBehaviour
         "第四关：全新挑战，发挥你的创造力！",
         "第五关：最终关卡，冲刺巅峰！"
     };
+    //新增关卡提示文本
+    public string[] levelTipsTexts = new string[5] {
+        "请将纤维环、髓核、软骨终板按正确的顺序及位置进行组装。",
+        "请将腰椎结构的L1-L5,尾椎结构的S1-S5按正确的顺序及位置进行组装。",
+        "请拖动骨骼结构将颈椎结构的C1-C8,胸椎结构的T1-T12按正确的顺序及位置进行组装。",
+        "请拖动上方拼图碎片拼出整体的腰椎神经分布图。",
+        "请拖动肌肉模型进行正确的肌肉组装。"
+    };
     [TextArea] public string dragWrongText = "请按照顺序搭建！";
     [TextArea] public string dragRightText = "做的好，继续搭建剩余模型！";
     [TextArea] public string resultSuccessText = "恭喜你，完美达成了这次挑战！期待下一关你的表现！";
@@ -54,13 +62,12 @@ public class AIChatManager : MonoBehaviour
         if (chatPanel != null) chatPanel.SetActive(true);
         if (chatText != null) chatText.text = content;
     }
-    //新增第四关专属提示
-    public void ShowLevel4Chat()
+    //新增关卡提示
+    public void ShowLevelTips(int level)
     {
         if (chatPanel != null) chatPanel.SetActive(true);
-        if (chatText != null) chatText.text = "请拖动上方拼图碎片拼出整体的腰椎神经分布图。";
+        if (chatText != null) chatText.text = levelTipsTexts[level - 1];
     }
-
     /// <summary>
     /// 隐藏聊天面板
     /// </summary>
