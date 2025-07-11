@@ -3,37 +3,29 @@ using System.Collections.Generic;
 
 public class RandomObjectArranger : MonoBehaviour
 {
-    [SerializeField] GameObject obj1;
-    [SerializeField] GameObject obj2;
-    [SerializeField] GameObject obj3;
-    [SerializeField] GameObject obj4;
-    [SerializeField] GameObject obj5;
-    [SerializeField] GameObject obj6;
-    [SerializeField] GameObject obj7;
-    [SerializeField] GameObject obj8;
-    [SerializeField] GameObject obj9;
-    [SerializeField] GameObject obj10;
-    [SerializeField] GameObject obj11;
-    [SerializeField] GameObject obj12;
-    [SerializeField] GameObject obj13;
-    [SerializeField] GameObject obj14;
-    [SerializeField] GameObject obj15;
-    [SerializeField] GameObject obj16;
+    [Header("需要打乱的对象")]
+    [SerializeField] List<GameObject> objects;
 
-    // X坐标值
-    private float[] xPositions = new float[] { -1.75f, -1.25f, -0.75f, -0.25f, 0.25f, 0.75f, 1.25f, 1.75f };
-    // Y坐标值（两排）
-    private float[] yPositions = new float[] { 1.75f, 2.25f };
+    [Header("X坐标位置")]
+    [SerializeField] float[] xPositions = new float[] { -1.75f, -1.25f, -0.75f, -0.25f, 0.25f, 0.75f, 1.25f, 1.75f };
+
+    [Header("Y坐标位置")]
+    [SerializeField] float[] yPositions = new float[] { 1.75f, 2.25f };
+
+    [Header("统一缩放")]
+    [SerializeField] Vector3 objectScale = new Vector3(0.4f, 0.4f, 1f);
+
+    [SerializeField] bool scaleRight = false;
 
     void OnEnable()
     {
-        // 将所有对象放入列表
-        List<GameObject> objects = new List<GameObject> { obj1, obj2, obj3, obj4, obj5, obj6, obj7, obj8, obj9, obj10, obj11, obj12, obj13, obj14, obj15, obj16 };
+        if (objects == null || objects.Count == 0)
+        {
+            Debug.LogWarning("请在 Inspector 中分配 objects");
+            return;
+        }
 
-        // 随机打乱对象顺序
         ShuffleList(objects);
-
-        // 分配位置
         ArrangeObjects(objects);
     }
 
@@ -51,23 +43,17 @@ public class RandomObjectArranger : MonoBehaviour
     void ArrangeObjects(List<GameObject> objects)
     {
         int index = 0;
-
-        // 第一排 (y = 3.75)
-        for (int col = 0; col < 8; col++)
+        for (int row = 0; row < yPositions.Length; row++)
         {
-            if (index >= objects.Count) return;
-            objects[index].transform.localPosition = new Vector3(xPositions[col], yPositions[0], 0);
-            objects[index].transform.localScale = new Vector3(0.4f, 0.4f, 1f);
-            index++;
-        }
+            for (int col = 0; col < xPositions.Length; col++)
+            {
+                if (index >= objects.Count) return;
+                objects[index].transform.localPosition = new Vector3(xPositions[col], yPositions[row], 0);
+                if(scaleRight)
+                    objects[index].transform.localScale = objectScale;
 
-        // 第二排 (y = 3.25)
-        for (int col = 0; col < 8; col++)
-        {
-            if (index >= objects.Count) return;
-            objects[index].transform.localPosition = new Vector3(xPositions[col], yPositions[1], 0);
-            objects[index].transform.localScale = new Vector3(0.4f, 0.4f, 1f);
-            index++;
+                index++;
+            }
         }
     }
 }

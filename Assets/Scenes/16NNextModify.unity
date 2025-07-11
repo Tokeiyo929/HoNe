@@ -18116,13 +18116,14 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1617659281}
+  - component: {fileID: 1617659282}
   m_Layer: 0
   m_Name: Level3Object
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!4 &1617659281
 Transform:
   m_ObjectHideFlags: 0
@@ -18177,6 +18178,54 @@ Transform:
   - {fileID: 1826073147}
   m_Father: {fileID: 655840865}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1617659282
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1617659280}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c1dc36aefc121224e8854433550235d2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  objects:
+  - {fileID: 1200372026}
+  - {fileID: 288093111}
+  - {fileID: 71849710}
+  - {fileID: 1667762168}
+  - {fileID: 1240079071}
+  - {fileID: 1739479827}
+  - {fileID: 1129611889}
+  - {fileID: 1112349878}
+  - {fileID: 475420574}
+  - {fileID: 895625111}
+  - {fileID: 1642860160}
+  - {fileID: 501773743}
+  - {fileID: 298257246}
+  - {fileID: 1927595973}
+  - {fileID: 1014501394}
+  - {fileID: 1398537990}
+  - {fileID: 1385573061}
+  - {fileID: 1212207706}
+  - {fileID: 2139232726}
+  xPositions:
+  - -1.8
+  - 1.8
+  yPositions:
+  - 1
+  - 1.7
+  - 2.4
+  - 3.1
+  - 3.8
+  - 4.5
+  - 5.2
+  - 5.9
+  - 6.3
+  - 7
+  objectScale: {x: 0.4, y: 0.4, z: 1}
+  scaleRight: 0
 --- !u!1 &1620700749
 GameObject:
   m_ObjectHideFlags: 0
@@ -27546,22 +27595,37 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c1dc36aefc121224e8854433550235d2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  obj1: {fileID: 8619962065179149977}
-  obj2: {fileID: 5786596430169184697}
-  obj3: {fileID: 8926431208893038439}
-  obj4: {fileID: 8326051242502841046}
-  obj5: {fileID: 5732914156003350678}
-  obj6: {fileID: 529499734}
-  obj7: {fileID: 1345129272}
-  obj8: {fileID: 2434605072439992166}
-  obj9: {fileID: 3499912764768188273}
-  obj10: {fileID: 358384872}
-  obj11: {fileID: 2060420004}
-  obj12: {fileID: 8729417616225435803}
-  obj13: {fileID: 6450261913466506458}
-  obj14: {fileID: 1441991842530326771}
-  obj15: {fileID: 740671422472440302}
-  obj16: {fileID: 5079173533086762787}
+  objects:
+  - {fileID: 5079173533086762787}
+  - {fileID: 740671422472440302}
+  - {fileID: 1441991842530326771}
+  - {fileID: 6450261913466506458}
+  - {fileID: 8729417616225435803}
+  - {fileID: 529499734}
+  - {fileID: 358384872}
+  - {fileID: 2060420004}
+  - {fileID: 1345129272}
+  - {fileID: 3499912764768188273}
+  - {fileID: 2434605072439992166}
+  - {fileID: 5732914156003350678}
+  - {fileID: 8326051242502841046}
+  - {fileID: 8926431208893038439}
+  - {fileID: 5786596430169184697}
+  - {fileID: 8619962065179149977}
+  xPositions:
+  - -1.75
+  - -1.25
+  - -0.75
+  - -0.25
+  - 0.25
+  - 0.75
+  - 1.25
+  - 1.75
+  yPositions:
+  - 1.75
+  - 2.25
+  objectScale: {x: 0.4, y: 0.4, z: 1}
+  scaleRight: 1
 --- !u!4 &5641646298284434719
 Transform:
   m_ObjectHideFlags: 0
