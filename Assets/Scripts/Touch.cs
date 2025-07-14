@@ -1,7 +1,9 @@
+using DG.Tweening;
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UIElements;
 
 public class Touch : MonoBehaviour
 {
@@ -41,6 +43,12 @@ public class Touch : MonoBehaviour
 
     public Action<bool> OnLevelFinished;
     public bool canDrag = true;
+
+    //新增错误反馈功能
+    [Header("Error Feedback")]
+    [SerializeField] private AudioClip rightSound;
+    [SerializeField] private AudioClip errorSound; // 错误音效
+    [SerializeField] private GameObject errorCrossPrefab; // 叉叉图标预制体
 
     void Start()
     {
@@ -301,57 +309,93 @@ else if (touch.phase == TouchPhase.Ended || touch.phase == TouchPhase.Canceled)
     }
 
     private void HandleReleaseForOtherLevels()
-{
-    Collider selectedCol = selectedObject.GetComponent<Collider>();
-    if (selectedCol == null) return;
-
-    var step = dragSteps[currentStep];
-
-    if (selectedObject.gameObject == step.draggableObject)
     {
-        if (step.targetTrigger != null && selectedCol.bounds.Intersects(step.targetTrigger.bounds))
-        {
-            step.targetTrigger.enabled = false;
-            step.isCompleted = true;
+        Collider selectedCol = selectedObject.GetComponent<Collider>();
+        if (selectedCol == null) return;
 
-            // 从可拖拽列表中移除该物体，防止再次拖拽
-            if (draggableObjects.Contains(selectedObject.gameObject))
+        var step = dragSteps[currentStep];
+
+        if (selectedObject.gameObject == step.draggableObject)
+        {
+            if (step.targetTrigger != null && selectedCol.bounds.Intersects(step.targetTrigger.bounds))
             {
-                draggableObjects.Remove(selectedObject.gameObject);
+                // 正确放置的处理
+                step.targetTrigger.enabled = false;
+                step.isCompleted = true;
+
+                if (draggableObjects.Contains(selectedObject.gameObject))
+                {
+                    draggableObjects.Remove(selectedObject.gameObject);
+                }
+
+                StartCoroutine(MoveToTarget(selectedObject, step.targetPosition.position, step.targetPosition.rotation));
+                //新增播放正确音效
+                AudioSource.PlayClipAtPoint(rightSound, selectedObject.position);
+                if (AIChatManager.Instance != null)
+                    AIChatManager.Instance.ShowDragRightChat();
+
+                currentStep++;
             }
+            else
+            {
+                // 错误放置的处理
+                StartCoroutine(ShowErrorFeedback(selectedObject.transform.position));
+                StartCoroutine(MoveToInitialPosition(selectedObject));
 
-            StartCoroutine(MoveToTarget(selectedObject, step.targetPosition.position, step.targetPosition.rotation));
-
-            if (AIChatManager.Instance != null)
-                AIChatManager.Instance.ShowDragRightChat();
-
-            currentStep++;
+                if (AIChatManager.Instance != null)
+                    AIChatManager.Instance.ShowDragWrongChat();
+            }
         }
         else
         {
-            StartCoroutine(MoveToInitialPosition(selectedObject));
-
-            if (AIChatManager.Instance != null)
+            if (step.targetTrigger != null && selectedCol.bounds.Intersects(step.targetTrigger.bounds))
+            {
+                // 错误放置的处理
+                StartCoroutine(ShowErrorFeedback(selectedObject.transform.position));
+                StartCoroutine(MoveToInitialPosition(selectedObject));
                 AIChatManager.Instance.ShowDragWrongChat();
+            }
+            else
+            {
+                StartCoroutine(MoveToInitialPosition(selectedObject));
+            }
         }
+
+        selectedObject = null;
     }
-    else
+
+    // 显示错误反馈的协程
+    private IEnumerator ShowErrorFeedback(Vector3 position)
     {
-        if (step.targetTrigger != null && selectedCol.bounds.Intersects(step.targetTrigger.bounds))
-        {
-            StartCoroutine(MoveToInitialPosition(selectedObject));
+        // 震动反馈
+        Handheld.Vibrate();
 
-            if (AIChatManager.Instance != null)
-                AIChatManager.Instance.ShowDragWrongChat();
-        }
-        else
+        // 播放错误音效
+        if (errorSound != null)
         {
-            StartCoroutine(MoveToInitialPosition(selectedObject));
+            AudioSource.PlayClipAtPoint(errorSound, position);
         }
+
+        // 创建叉叉图标
+        if (errorCrossPrefab != null)
+        {
+            Vector3 adjustedPosition = new Vector3(position.x, position.y, position.z - 1f); // 减少Z值使更靠近相机
+            GameObject cross = Instantiate(errorCrossPrefab, adjustedPosition, Quaternion.identity);
+
+            // 设置叉叉的初始状态
+            cross.transform.localScale = Vector3.zero;
+
+            // 使用DOTween动画
+            Sequence seq = DOTween.Sequence();
+            seq.Append(cross.transform.DOScale(0.3f, 0.2f).SetEase(Ease.OutBack));
+            seq.Append(cross.transform.DOScale(0.25f, 0.1f));
+            seq.AppendInterval(0.5f); // 显示一段时间
+            seq.Append(cross.transform.DOScale(0f, 0.2f).SetEase(Ease.InBack));
+            seq.OnComplete(() => Destroy(cross));
+        }
+
+        yield return null;
     }
-
-    selectedObject = null;
-}
 
     //void FixedUpdate()
     //{

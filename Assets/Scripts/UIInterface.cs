@@ -636,6 +636,8 @@ public class UIInterface : MonoBehaviour
     private IEnumerator LevelCountdown(int seconds)
     {
         if (countdownPanel != null) countdownPanel.SetActive(true);
+        //播放倒计时动画
+        countdownPanel.GetComponent<UIAnimation>().AnimatedUI();
         int timeLeft = seconds;
         while (timeLeft > 0)
         {
