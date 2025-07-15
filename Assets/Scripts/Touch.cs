@@ -291,6 +291,17 @@ else if (touch.phase == TouchPhase.Ended || touch.phase == TouchPhase.Canceled)
 
                     StartCoroutine(MoveToTarget(selectedObject, step.targetPosition.position, step.targetPosition.rotation));
 
+                    //新增第四关反馈
+                    if (selectedObject.gameObject == step.draggableObject)
+                    {
+                        // 播放正确音效
+                        AudioSource.PlayClipAtPoint(rightSound, selectedObject.position);
+                    }
+                    else
+                    {
+                        StartCoroutine(ShowErrorFeedback(selectedObject.transform.position));
+                    }
+                    
                     //if (AIChatManager.Instance != null)
                     //    AIChatManager.Instance.ShowDragRightChat();
 

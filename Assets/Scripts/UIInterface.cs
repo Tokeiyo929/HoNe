@@ -148,6 +148,11 @@ public class UIInterface : MonoBehaviour
     [Header("关卡显示文本")]
     public TextMeshProUGUI currentLevelText; // 新增：当前关卡显示文本
 
+    //新增关卡结束音效
+    [Header("soundFeedback")]
+    [SerializeField] private AudioClip completedSound;
+    [SerializeField] private AudioClip failureSound;
+
     void Start()
     {
         HideAllLevels();
@@ -842,6 +847,16 @@ public class UIInterface : MonoBehaviour
 
         if (resultTitleText != null)
             resultTitleText.text = success ? "挑战成功" : "挑战失败";
+
+        //新增结束关卡音效
+        if (success)
+        {
+            AudioSource.PlayClipAtPoint(completedSound, Camera.main.transform.position, 0.3f);
+        }
+        else
+        {
+            AudioSource.PlayClipAtPoint(failureSound, Camera.main.transform.position, 0.3f);
+        }
 
         // 禁用拖拽功能
         if (touchScript != null)

@@ -43,13 +43,15 @@ public class RandomObjectArranger : MonoBehaviour
     void ArrangeObjects(List<GameObject> objects)
     {
         int index = 0;
+        // 从最小的 Y（最下面）开始
         for (int row = 0; row < yPositions.Length; row++)
         {
-            for (int col = 0; col < xPositions.Length; col++)
+            // 从最大的 X（最右边）开始
+            for (int col = xPositions.Length - 1; col >= 0; col--)
             {
                 if (index >= objects.Count) return;
                 objects[index].transform.localPosition = new Vector3(xPositions[col], yPositions[row], 0);
-                if(scaleRight)
+                if (scaleRight)
                     objects[index].transform.localScale = objectScale;
 
                 index++;
