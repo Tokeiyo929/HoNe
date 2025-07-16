@@ -150,8 +150,14 @@ public class UIInterface : MonoBehaviour
 
     //新增关卡结束音效
     [Header("soundFeedback")]
-    [SerializeField] private AudioClip completedSound;
-    [SerializeField] private AudioClip failureSound;
+    [SerializeField] private AudioClip completedSound1;
+    [SerializeField] private AudioClip completedSound2;
+    [SerializeField] private AudioClip completedSound3;
+    [SerializeField] private AudioClip failureSound1;
+    [SerializeField] private AudioClip failureSound2;
+
+    //新增音频组件
+    [SerializeField] private AudioSource audioSource;
 
     void Start()
     {
@@ -714,7 +720,7 @@ public class UIInterface : MonoBehaviour
                 ShowResultPanel(success);
                 // 显示挑战结果聊天内容
                 if (AIChatManager.Instance != null)
-                    AIChatManager.Instance.ShowResultChat(success);
+                    AIChatManager.Instance.ShowResultChat(success, level);
             };
         }
     }
@@ -838,7 +844,18 @@ public class UIInterface : MonoBehaviour
             return;
         }
     }
-
+    private void PlayAudio(AudioClip clip)
+    {
+        Debug.Log($"Attempting to play audio clip: {clip?.name ?? "null"}, currently playing: {audioSource.isPlaying}");
+        if (audioSource.isPlaying)
+        {
+            audioSource.Stop();
+            Debug.Log("Stopped current audio.");
+        }
+        audioSource.clip = clip;
+        audioSource.Play();
+        Debug.Log($"Started playing: {clip?.name ?? "null"}");
+    }
     // 显示挑战结果界面
     void ShowResultPanel(bool success)
     {
@@ -851,11 +868,14 @@ public class UIInterface : MonoBehaviour
         //新增结束关卡音效
         if (success)
         {
-            AudioSource.PlayClipAtPoint(completedSound, Camera.main.transform.position, 0.3f);
+            if (currentLevel < 5)
+                PlayAudio(completedSound2);
+            else
+                PlayAudio(completedSound3);
         }
         else
         {
-            AudioSource.PlayClipAtPoint(failureSound, Camera.main.transform.position, 0.3f);
+            PlayAudio(failureSound2);
         }
 
         // 禁用拖拽功能

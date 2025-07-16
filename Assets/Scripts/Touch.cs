@@ -49,7 +49,6 @@ public class Touch : MonoBehaviour
     [SerializeField] private AudioClip rightSound;
     [SerializeField] private AudioClip errorSound; // 错误音效
     [SerializeField] private GameObject errorCrossPrefab; // 叉叉图标预制体
-
     void Start()
     {
         SetLevel(1);
@@ -295,7 +294,7 @@ else if (touch.phase == TouchPhase.Ended || touch.phase == TouchPhase.Canceled)
                     if (selectedObject.gameObject == step.draggableObject)
                     {
                         // 播放正确音效
-                        AudioSource.PlayClipAtPoint(rightSound, selectedObject.position);
+                        AudioSource.PlayClipAtPoint(rightSound, step.targetPosition.position);
                     }
                     else
                     {
@@ -341,7 +340,7 @@ else if (touch.phase == TouchPhase.Ended || touch.phase == TouchPhase.Canceled)
 
                 StartCoroutine(MoveToTarget(selectedObject, step.targetPosition.position, step.targetPosition.rotation));
                 //新增播放正确音效
-                AudioSource.PlayClipAtPoint(rightSound, selectedObject.position);
+                AudioSource.PlayClipAtPoint(rightSound, step.targetPosition.position);
                 if (AIChatManager.Instance != null)
                     AIChatManager.Instance.ShowDragRightChat();
 
@@ -374,7 +373,6 @@ else if (touch.phase == TouchPhase.Ended || touch.phase == TouchPhase.Canceled)
 
         selectedObject = null;
     }
-
     // 显示错误反馈的协程
     private IEnumerator ShowErrorFeedback(Vector3 position)
     {

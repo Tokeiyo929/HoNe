@@ -14,8 +14,10 @@ public class AIChatManager : MonoBehaviour
     public GameObject chatPanel; // 聊天面板父物体
     public TextMeshProUGUI chatText; // 聊天内容文本
 
-    [Header("各界面聊天内容")]
+    //新增音频配置
+    [Header("各界面聊天内容和音频")]
     [TextArea] public string selectPanelText = "欢迎来到选择界面，请选择你要挑战的关卡！";
+    [SerializeField] AudioClip selectPanelAudio; // 选择界面音频
     [TextArea]
     public string[] levelStartTexts = new string[5] {
         "第一关：请按照提示顺序搭建模型，加油！",
@@ -24,6 +26,8 @@ public class AIChatManager : MonoBehaviour
         "第四关：全新挑战，发挥你的创造力！",
         "第五关：最终关卡，冲刺巅峰！"
     };
+    [SerializeField]
+    AudioClip[] levelStartAudios = new AudioClip[5];
     //新增关卡提示文本
     public string[] levelTipsTexts = new string[5] {
         "请将纤维环、髓核、软骨终板按正确的顺序及位置进行组装。",
@@ -32,10 +36,14 @@ public class AIChatManager : MonoBehaviour
         "请拖动上方拼图碎片拼出整体的腰椎神经分布图。",
         "请拖动肌肉模型进行正确的肌肉组装。"
     };
+    public AudioClip[] levelTipsAudios = new AudioClip[5];
     [TextArea] public string dragWrongText = "请按照顺序搭建！";
     [TextArea] public string dragRightText = "做的好，继续搭建剩余模型！";
     [TextArea] public string resultSuccessText = "恭喜你，完美达成了这次挑战！期待下一关你的表现！";
     [TextArea] public string resultFailText = "别灰心，失败只是暂时的，它是你优化策略、提升实力的最佳机会。要再试一次吗？";
+
+    //新增音频组件
+    [SerializeField] private AudioSource audioSource;
 
     void Awake()
     {
@@ -46,6 +54,18 @@ public class AIChatManager : MonoBehaviour
             return;
         }
         Instance = this;
+    }
+    private void PlayAudio(AudioClip clip)
+    {
+        Debug.Log($"Attempting to play audio clip: {clip?.name ?? "null"}, currently playing: {audioSource.isPlaying}");
+        if (audioSource.isPlaying)
+        {
+            audioSource.Stop();
+            Debug.Log("Stopped current audio.");
+        }
+        audioSource.clip = clip;
+        audioSource.Play();
+        Debug.Log($"Started playing: {clip?.name ?? "null"}");
     }
 
     void OnDestroy()
@@ -67,6 +87,7 @@ public class AIChatManager : MonoBehaviour
     {
         if (chatPanel != null) chatPanel.SetActive(true);
         if (chatText != null) chatText.text = levelTipsTexts[level - 1];
+        PlayAudio(levelTipsAudios[level - 1]);
     }
     /// <summary>
     /// 隐藏聊天面板
@@ -82,6 +103,7 @@ public class AIChatManager : MonoBehaviour
     public void ShowSelectPanelChat()
     {
         ShowChat(selectPanelText);
+        PlayAudio(selectPanelAudio); 
     }
 
     /// <summary>
@@ -91,6 +113,7 @@ public class AIChatManager : MonoBehaviour
     {
         int idx = Mathf.Clamp(level - 1, 0, levelStartTexts.Length - 1);
         ShowChat(levelStartTexts[idx]);
+        PlayAudio(levelStartAudios[idx]);
     }
 
     /// <summary>
@@ -116,5 +139,14 @@ public class AIChatManager : MonoBehaviour
     {
         ShowChat(success ? resultSuccessText : resultFailText);
     }
-    
+    public void ShowResultChat(bool success, int level)
+    {
+        if (level == 5)
+        {
+            ShowChat("恭喜你，完美达成了这次挑战！本次挑战到此结束，您可以选择进入知识答题环节。");
+            return;
+        }
+        ShowChat(success ? resultSuccessText : resultFailText);
+    }
+
 }
