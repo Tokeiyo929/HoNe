@@ -7,9 +7,9 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: 43
+  m_Name: M_Body
   m_Shader: {fileID: 46, guid: 0000000000000000f000000000000000, type: 0}
-  m_Parent: {fileID: 2100000, guid: 44bd44250f56df341b9364b54b4493ba, type: 2}
+  m_Parent: {fileID: 2100000, guid: f41e6b6c27e01b24fbe6e37e34149ca3, type: 2}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords:
   - _SMOOTHNESS_TEXTURE_ALBEDO_CHANNEL_A
@@ -23,13 +23,13 @@ Material:
   m_LockedProperties: 
   m_SavedProperties:
     serializedVersion: 3
-    m_TexEnvs:
-    - _MainTex:
-        m_Texture: {fileID: 2800000, guid: cf00a89d71a9ee444a0160db61e46bad, type: 3}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
+    m_TexEnvs: []
     m_Ints: []
     m_Floats:
+    - _GlossMapScale: 0
+    - _Glossiness: 0.5
+    - _Metallic: 0
     - _SmoothnessTextureChannel: 1
-    m_Colors: []
+    m_Colors:
+    - _Color: {r: 0.8607687, g: 0.8607687, b: 0.8607687, a: 1}
   m_BuildTextureStacks: []

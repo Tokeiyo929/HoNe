@@ -535,16 +535,18 @@ public class UIInterface : MonoBehaviour
         // 启动倒计时（每关单独设置）
         if (countdownPanel != null) countdownPanel.SetActive(false);
         if (countdownCoroutine != null) StopCoroutine(countdownCoroutine);
-        int countdown = 10;
-        switch (level)
-        {
-            case 1: countdown = knowledgeCountdownSeconds1 > 0 ? knowledgeCountdownSeconds1 : 10; break;
-            case 2: countdown = knowledgeCountdownSeconds2 > 0 ? knowledgeCountdownSeconds2 : 10; break;
-            case 3: countdown = knowledgeCountdownSeconds3 > 0 ? knowledgeCountdownSeconds3 : 10; break;
-            case 4: countdown = knowledgeCountdownSeconds4 > 0 ? knowledgeCountdownSeconds4 : 10; break;
-            case 5: countdown = knowledgeCountdownSeconds5 > 0 ? knowledgeCountdownSeconds5 : 10; break;
-        }
-        countdownCoroutine = StartCoroutine(KnowledgeCountdownAndShowStartButton(countdown));
+        //注释倒计时代码
+        //int countdown = 10;
+        //switch (level)
+        //{
+        //    case 1: countdown = knowledgeCountdownSeconds1 > 0 ? knowledgeCountdownSeconds1 : 10; break;
+        //    case 2: countdown = knowledgeCountdownSeconds2 > 0 ? knowledgeCountdownSeconds2 : 10; break;
+        //    case 3: countdown = knowledgeCountdownSeconds3 > 0 ? knowledgeCountdownSeconds3 : 10; break;
+        //    case 4: countdown = knowledgeCountdownSeconds4 > 0 ? knowledgeCountdownSeconds4 : 10; break;
+        //    case 5: countdown = knowledgeCountdownSeconds5 > 0 ? knowledgeCountdownSeconds5 : 10; break;
+        //}
+        //countdownCoroutine = StartCoroutine(KnowledgeCountdownAndShowStartButton(countdown));
+        countdownCoroutine = StartCoroutine(KnowledgeCountdownAndShowStartButton(0));
     }
 
     // 新增：知识面板倒计时，结束后显示开始挑战按钮
@@ -559,7 +561,7 @@ public class UIInterface : MonoBehaviour
             yield return new WaitForSeconds(1f);
             timeLeft--;
         }
-        yield return new WaitForSeconds(0.5f);
+        //yield return new WaitForSeconds(0.5f);
         if (countdownPanel != null) countdownPanel.SetActive(false);
         // 倒计时结束后显示开始挑战按钮
         if (startChallengeButton != null) startChallengeButton.gameObject.SetActive(true);
