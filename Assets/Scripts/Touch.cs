@@ -214,7 +214,14 @@ public class Touch : MonoBehaviour
             if (Physics.Raycast(ray, out hit))
             {
                 if (hit.transform.gameObject.layer == 6)
-                {                    hit.transform.localScale = Vector3.one;
+                {
+                Transform _objTrans = hit.collider.gameObject.transform;
+            ResetScale resetScaleComponent = _objTrans.GetComponent<ResetScale>();
+            Vector3 targetScale = resetScaleComponent != null ?
+                new Vector3(resetScaleComponent.normalScale.x, resetScaleComponent.normalScale.y, resetScaleComponent.normalScale.z) :
+                Vector3.one;
+
+            _objTrans.localScale = targetScale;
                 }
                 if (draggableObjects.Contains(hit.transform.gameObject))
                 {

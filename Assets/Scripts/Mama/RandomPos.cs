@@ -16,6 +16,7 @@ public class RandomObjectArranger : MonoBehaviour
     [SerializeField] Vector3 objectScale = new Vector3(0.4f, 0.4f, 1f);
 
     [SerializeField] bool scaleRight = false;
+    [SerializeField] bool randomRight = true;
 
     void OnEnable()
     {
@@ -25,8 +26,12 @@ public class RandomObjectArranger : MonoBehaviour
             return;
         }
 
-        ShuffleList(objects);
-        ArrangeObjects(objects);
+        if (randomRight)
+        {
+            ShuffleList(objects);
+        }
+
+        ArrangeObjects(objects, scaleRight);
     }
 
     void ShuffleList<T>(List<T> list)
@@ -40,7 +45,7 @@ public class RandomObjectArranger : MonoBehaviour
         }
     }
 
-    void ArrangeObjects(List<GameObject> objects)
+    void ArrangeObjects(List<GameObject> objects, bool applyScale = false)
     {
         int index = 0;
         // 从最小的 Y（最下面）开始
@@ -50,9 +55,13 @@ public class RandomObjectArranger : MonoBehaviour
             for (int col = xPositions.Length - 1; col >= 0; col--)
             {
                 if (index >= objects.Count) return;
+
                 objects[index].transform.localPosition = new Vector3(xPositions[col], yPositions[row], 0);
-                if (scaleRight)
+
+                if (applyScale)
+                {
                     objects[index].transform.localScale = objectScale;
+                }
 
                 index++;
             }

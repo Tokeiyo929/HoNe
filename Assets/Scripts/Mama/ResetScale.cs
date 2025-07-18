@@ -4,8 +4,12 @@ using UnityEngine;
 
 public class ResetScale : MonoBehaviour
 {
-    [Range(0.2f, 0.5f)]
-    public float resetScale;
+    [Range(0.1f, 20.0f)]
+    public float resetScale = 0.3f;
+
+    [Tooltip("The normal scale to reset to when clicked")]
+    public Vector3 normalScale = Vector3.one;
+
     public void SetScale()
     {
         transform.localScale = new Vector3(resetScale, resetScale, resetScale);

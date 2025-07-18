@@ -1,8 +1,11 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
-using TMPro;
+using static UIInterface;
 
 public class UIInterface : MonoBehaviour
 {
@@ -95,8 +98,16 @@ public class UIInterface : MonoBehaviour
         public bool isMultiple;          // 是否多选题
     }
 
-    [Header("题库自定义")]
-    public List<Question> questionBank = new List<Question>();
+    //[Header("题库自定义")]
+    //public List<Question> questionBank = new List<Question>();
+    [System.Serializable]
+    public class LevelQuestionBank
+    {
+        public List<Question> questions = new List<Question>();
+    }
+
+    [Header("分关卡题库")]
+    public List<LevelQuestionBank> levelQuestionBanks = new List<LevelQuestionBank>();
 
     [Header("拖拽关卡控制")]
     public Touch touchScript; // 拖拽脚本引用
@@ -159,6 +170,33 @@ public class UIInterface : MonoBehaviour
     //新增音频组件
     [SerializeField] private AudioSource audioSource;
 
+    //新增成绩单功能
+    [Header("成绩单界面")]
+    public GameObject reportCardPanel;         // 成绩单面板
+    public Transform reportCardContent;        // 成绩单内容父物体
+    public GameObject questionResultPrefab;    // 每道题结果的预制体
+    public TextMeshProUGUI totalScoreText;     // 总得分文本
+    public TextMeshProUGUI accuracyText;       // 正确率文本
+    public Button reportCardBackButton;        // 成绩单返回按钮
+
+    [System.Serializable]
+    public class QuestionResult
+    {
+        public int level;            // 关卡数字(1-5)
+        public string levelName;     // 关卡名称(第X关)
+        public int questionIndex;    // 题目索引(0-9)
+        public string questionText;
+        public List<string> userAnswers;
+        public List<string> correctAnswers;
+        public bool isCorrect;
+        public int score;            // 固定每题10分
+    }
+
+    private List<QuestionResult> allQuestionResults = new List<QuestionResult>();
+
+    public TMP_FontAsset sourceHanSansFont;
+
+
     void Start()
     {
         HideAllLevels();
@@ -182,8 +220,11 @@ public class UIInterface : MonoBehaviour
             level4Button.onClick.AddListener(() => EnterLevel(4));
         if (level5Button != null)
             level5Button.onClick.AddListener(() => EnterLevel(5));
+        //新增：绑定按钮直接到分数界面
+        if (reportCardBackButton != null)
+            reportCardBackButton.onClick.AddListener(OnReportCardBack);
         if (quizButton != null)
-            quizButton.onClick.AddListener(ShowQuizPanel);
+            quizButton.onClick.AddListener(ShowReportCard);
         if (backButton != null)
             backButton.onClick.AddListener(OnBackButton);
         if (confirmOrNextButton != null)
@@ -245,10 +286,11 @@ public class UIInterface : MonoBehaviour
         SetUIVisible(quizMainPanel, true);
         SetUIVisible(quizScorePanel, false);
         SetUIVisible(scorePanel, false); // 兼容旧逻辑，可移除
-        HideAllLevels();
+        //新增注释这段代码
+        //HideAllLevels();
         if (backButton != null) backButton.gameObject.SetActive(true);
         // 初始化答题系统
-        if (questionBank.Count > 0)
+        if (currentLevel >= 1 && currentLevel <= levelQuestionBanks.Count && levelQuestionBanks[currentLevel - 1].questions.Count > 0)
         {
             currentQuestionIndex = 0;
             isAnswering = true;
@@ -261,8 +303,11 @@ public class UIInterface : MonoBehaviour
     // 显示题目
     void ShowQuestion(int index)
     {
-        if (index < 0 || index >= questionBank.Count) return;
-        var q = questionBank[index];
+        if (currentLevel < 1 || currentLevel > levelQuestionBanks.Count) return;
+        var currentBank = levelQuestionBanks[currentLevel - 1]; // 关卡1对应索引0
+
+        if (index < 0 || index >= currentBank.questions.Count) return;
+        var q = currentBank.questions[index];
         if (questionTitleText != null) questionTitleText.text = q.title;
         for (int i = 0; i < optionToggles.Length; i++)
         {
@@ -316,22 +361,57 @@ public class UIInterface : MonoBehaviour
     }
 
     // 确认/下一题按钮逻辑
+    // 修改OnConfirmOrNext方法中的答题记录部分
     void OnConfirmOrNext()
     {
-        if (questionBank.Count == 0) return;
+        if (currentLevel < 1 || currentLevel > levelQuestionBanks.Count) return;
+        var currentBank = levelQuestionBanks[currentLevel - 1]; // 修正索引
+
+        if (currentBank.questions.Count == 0) return;
+        var currentQuestion = currentBank.questions[currentQuestionIndex]; // 使用currentQuestion替代question
+
         if (isAnswering)
         {
-            var q = questionBank[currentQuestionIndex];
-            bool isCorrect = true;
-            for (int i = 0; i < q.options.Count; i++)
+            // 记录用户答案和正确答案
+            List<string> userAnswers = new List<string>();
+            List<string> correctAnswers = new List<string>();
+
+            for (int i = 0; i < currentQuestion.options.Count; i++)
             {
-                bool shouldBeOn = q.options[i].isAnswer;
-                bool isOn = optionToggles[i].isOn;
-                if (shouldBeOn != isOn)
+                if (currentQuestion.options[i].isAnswer)
+                    correctAnswers.Add(currentQuestion.options[i].text);
+
+                if (optionToggles[i].isOn)
+                    userAnswers.Add(currentQuestion.options[i].text); // 使用currentQuestion
+            }
+
+            // 判断是否正确
+            bool isCorrect = true;
+            for (int i = 0; i < currentQuestion.options.Count; i++)
+            {
+                if (currentQuestion.options[i].isAnswer != optionToggles[i].isOn)
                 {
                     isCorrect = false;
+                    break;
                 }
             }
+
+            // 记录答题结果 - 每题固定10分
+            var result = new QuestionResult
+            {
+                level = currentLevel,
+                levelName = $"第{currentLevel}关",
+                questionIndex = currentQuestionIndex,
+                questionText = currentQuestion.title, // 使用currentQuestion
+                userAnswers = userAnswers,
+                correctAnswers = correctAnswers,
+                isCorrect = isCorrect,
+                score = isCorrect ? 10 : 0  // 每题固定10分
+            };
+
+            allQuestionResults.Add(result);
+
+            // 更新UI反馈
             if (isCorrect)
             {
                 if (tipText != null)
@@ -348,69 +428,176 @@ public class UIInterface : MonoBehaviour
                     tipText.text = "回答错误，正确答案已经显示";
                     tipText.color = Color.red;
                 }
-                // 标注正确答案：正确的toggle打勾，错误的取消，文本绿色
-                for (int i = 0; i < q.options.Count; i++)
+
+                // 显示正确答案
+                for (int i = 0; i < currentQuestion.options.Count; i++)
                 {
-                    if (q.options[i].isAnswer)
+                    optionToggles[i].isOn = currentQuestion.options[i].isAnswer;
+                    if (optionTexts[i] != null)
                     {
-                        optionToggles[i].isOn = true;
-                        optionTexts[i].color = Color.green;
-                    }
-                    else
-                    {
-                        optionToggles[i].isOn = false;
-                        optionTexts[i].color = Color.white;
+                        optionTexts[i].color = currentQuestion.options[i].isAnswer ? Color.green : Color.white;
                     }
                 }
             }
+
             // 禁用所有Toggle
-            for (int i = 0; i < q.options.Count; i++)
+            foreach (var toggle in optionToggles)
             {
-                optionToggles[i].interactable = false;
+                if (toggle != null) toggle.interactable = false;
             }
-            // 判断是否为最后一题，按钮文本显示“提交试卷”
+
+            // 更新按钮文本
             if (confirmOrNextButtonText != null)
             {
-                if (currentQuestionIndex == questionBank.Count - 1)
-                    confirmOrNextButtonText.text = "提交试卷";
-                else
-                    confirmOrNextButtonText.text = "下一题";
+                confirmOrNextButtonText.text = currentQuestionIndex == currentBank.questions.Count - 1 ?
+                    "提交试卷" : "下一题";
             }
+
             isAnswering = false;
         }
         else
         {
             // 下一题或提交试卷
-            if (currentQuestionIndex < questionBank.Count - 1)
+            if (currentQuestionIndex < currentBank.questions.Count - 1)
             {
                 currentQuestionIndex++;
                 ShowQuestion(currentQuestionIndex);
             }
             else
             {
-                ShowScorePanel();
+                SetUIVisible(quizPanel, false);
+                ShowResultPanel(true);
             }
         }
     }
-
-    // 显示得分界面
-    void ShowScorePanel()
+    void OnReportCardBack()
     {
+        SetUIVisible(reportCardPanel, false);
+        ShowLevelSelectPanel();
+    }
+    // 显示得分界面
+    void ShowReportCard()
+    {
+        // 隐藏不需要的面板
         SetUIVisible(quizPanel, true);
         SetUIVisible(quizMainPanel, false);
-        SetUIVisible(quizScorePanel, true);
-        SetUIVisible(scorePanel, true); // 兼容旧逻辑，可移除
-        SetUIVisible(levelSelectPanel, false);
-        SetUIVisible(startPanel, false);
-        if (backButton != null) backButton.gameObject.SetActive(false);
-        // 计算分数
-        int questionCount = Mathf.Max(1, questionBank.Count);
-        int perScore = Mathf.RoundToInt(100f / questionCount);
-        totalScore = correctCount * perScore;
-        // 若最后一题答对但因整除关系未满100分，最后一题补足
-        if (currentQuestionIndex == questionBank.Count && correctCount == questionBank.Count)
-            totalScore = 100;
-        if (scoreText != null) scoreText.text = $"{totalScore}";
+        SetUIVisible(reportCardPanel, true);
+
+        // 计算总分和正确率
+        int totalScore = 0;
+        int correctCount = 0;
+
+        foreach (var result in allQuestionResults)
+        {
+            totalScore += result.score;
+            if (result.isCorrect) correctCount++;
+        }
+
+        float accuracy = allQuestionResults.Count > 0 ?
+            (float)correctCount / allQuestionResults.Count * 100f : 0f;
+
+        // 更新总分显示
+        totalScoreText?.SetText($"总得分: {totalScore}/100");
+        accuracyText?.SetText($"正确率: {accuracy:F1}%");
+
+        // 清空旧内容
+        foreach (Transform child in reportCardContent)
+            Destroy(child.gameObject);
+
+        // 按关卡分组显示
+        for (int level = 1; level <= 5; level++)
+        {
+            var levelResults = allQuestionResults.FindAll(r => r.level == level);
+            if (levelResults.Count == 0) continue;
+
+            // 添加关卡标题
+            var header = new GameObject($"Level{level}Header", typeof(RectTransform), typeof(TextMeshProUGUI), typeof(LayoutElement));
+            header.transform.SetParent(reportCardContent, false);
+
+            // 设置 RectTransform
+            RectTransform rect = header.GetComponent<RectTransform>();
+            rect.localScale = Vector3.one;
+
+            // 设置 Text 属性
+            var headerText = header.GetComponent<TextMeshProUGUI>();
+            headerText.font = sourceHanSansFont; // 使用Source Han Sans字体
+            headerText.text = $"第{level}关";
+            headerText.fontSize = 25;
+            headerText.fontStyle = FontStyles.Bold;
+            headerText.color = new Color(0.2f, 0.4f, 0.8f);
+            headerText.alignment = TextAlignmentOptions.Left;
+
+            // 设置 LayoutElement 高度为 50
+            var layout = header.GetComponent<LayoutElement>();
+            layout.preferredHeight = 50;
+            layout.flexibleHeight = 0;
+
+
+
+            // 添加该关卡的所有题目
+            foreach (var result in levelResults.OrderBy(r => r.questionIndex))
+            {
+                var item = Instantiate(questionResultPrefab, reportCardContent);
+
+                // 设置题目文本 (题号从1开始)
+                // 设置题目文本 (题号从1开始)
+                item.transform.Find("QuestionText").GetComponent<TextMeshProUGUI>().text =
+                    $"Q{result.questionIndex + 1}: {result.questionText}";
+
+                // 设置 ABCD 选项文本（前提是 prefab 中有 OptionAText 等）
+                var levelQuestions = levelQuestionBanks[result.level - 1].questions;
+                if (result.questionIndex < levelQuestions.Count)
+                {
+                    var options = levelQuestions[result.questionIndex].options;
+
+                    // A
+                    var aText = item.transform.Find("OptionAText")?.GetComponent<TextMeshProUGUI>();
+                    if (aText != null && options.Count > 0) aText.text = $"A. {options[0].text}";
+
+                    // B
+                    var bText = item.transform.Find("OptionBText")?.GetComponent<TextMeshProUGUI>();
+                    if (bText != null && options.Count > 1) bText.text = $"B. {options[1].text}";
+
+                    // C
+                    var cText = item.transform.Find("OptionCText")?.GetComponent<TextMeshProUGUI>();
+                    if (cText != null && options.Count > 2) cText.text = $"C. {options[2].text}";
+
+                    // D
+                    var dText = item.transform.Find("OptionDText")?.GetComponent<TextMeshProUGUI>();
+                    if (dText != null && options.Count > 3) dText.text = $"D. {options[3].text}";
+                }
+
+
+                // 设置答案对比
+                var userAnswerText = item.transform.Find("UserAnswerText").GetComponent<TextMeshProUGUI>();
+                var correctAnswerText = item.transform.Find("CorrectAnswerText").GetComponent<TextMeshProUGUI>();
+
+                userAnswerText.text = "你的答案: " + (result.userAnswers.Count > 0 ?
+                    string.Join("; ", result.userAnswers) : "未作答");
+                correctAnswerText.text = "正确答案: " + string.Join("; ", result.correctAnswers);
+
+                // 设置结果标记
+                var resultMark = item.transform.Find("ResultMark").GetComponent<TextMeshProUGUI>();
+                if (result.isCorrect)
+                {
+                    resultMark.text = "✓ 正确";
+                    resultMark.color = Color.green;
+                }
+                else
+                {
+                    resultMark.text = "× 错误";
+                    resultMark.color = Color.red;
+                }
+
+                // 设置得分 (每题固定10分)
+                item.transform.Find("ScoreText").GetComponent<TextMeshProUGUI>().text =
+                    $"{result.score}分";
+            }
+        }
+
+        // 滚动到顶部
+        Canvas.ForceUpdateCanvases();
+        reportCardContent.parent.parent.GetComponent<ScrollRect>().verticalNormalizedPosition = 1;
     }
 
     // 得分界面返回按钮
@@ -461,6 +648,8 @@ public class UIInterface : MonoBehaviour
     // 进入指定关卡，显示知识界面，倒计时结束后出现开始挑战按钮
     public void EnterLevel(int level)
     {
+        allQuestionResults.RemoveAll(r => r.level == level);
+
         // 隐藏聊天面板
         if (AIChatManager.Instance != null)
             AIChatManager.Instance.HideChat();
@@ -719,10 +908,13 @@ public class UIInterface : MonoBehaviour
                 // 关卡完成时关闭倒计时面板和协程
                 if (levelCountdownCoroutine != null) StopCoroutine(levelCountdownCoroutine);
                 if (countdownPanel != null) countdownPanel.SetActive(false);
-                ShowResultPanel(success);
+                //修改：胜利直接跳答题面板
+                //ShowResultPanel(success);
+                ShowQuizPanel();
+                //暂时注释并等待新的位置
                 // 显示挑战结果聊天内容
-                if (AIChatManager.Instance != null)
-                    AIChatManager.Instance.ShowResultChat(success, level);
+                //if (AIChatManager.Instance != null)
+                //    AIChatManager.Instance.ShowResultChat(success, level);
             };
         }
     }
@@ -861,6 +1053,7 @@ public class UIInterface : MonoBehaviour
     // 显示挑战结果界面
     void ShowResultPanel(bool success)
     {
+        Debug.Log($"显示挑战结果界面，成功：{success}");
         SetUIVisible(resultPanel, true);
         if (backButton != null) backButton.gameObject.SetActive(false);
 
@@ -890,10 +1083,11 @@ public class UIInterface : MonoBehaviour
             if (success)
             {
                 // 修正：第三关完成后应为“进入下一关”，只有第五关才显示“知识答题”
+                // 新增：查看总分的功能，将知识答题按钮改为“查看总分”
                 if (currentLevel < 5)
                     resultNextOrRetryText.text = "进入下一关";
                 else
-                    resultNextOrRetryText.text = "知识答题";
+                    resultNextOrRetryText.text = "查看总分";
             }
             else
             {
@@ -1026,6 +1220,7 @@ public class UIInterface : MonoBehaviour
 
     void OnResultNextOrRetry()
     {
+        Debug.Log("处理结果界面下一步或重试逻辑");
         isViewingModel = false;
         // 复原模型旋转
         GameObject targetObj = null;
@@ -1060,12 +1255,18 @@ public class UIInterface : MonoBehaviour
                 UpdateCurrentLevelText(nextLevel);
             }
         }
+        else if (txt == "查看总分")
+        {
+            SetUIVisible(resultPanel, false);
+            // 显示得分界面
+            ShowReportCard();
+        }
         else if (txt == "知识答题")
         {
             // 隐藏高亮和模型
-            if (level5Objects != null) level5Objects.SetActive(false);
-            if (level5ObjectShow != null) level5ObjectShow.ResetAllOutline();
-            SetUIVisible(resultPanel, false);
+            //if (level5Objects != null) level5Objects.SetActive(false);
+            //if (level5ObjectShow != null) level5ObjectShow.ResetAllOutline();
+            //SetUIVisible(resultPanel, false);
             // 进入知识答题界面
             ShowQuizPanel();
         }
@@ -1225,6 +1426,7 @@ public class UIInterface : MonoBehaviour
     // 答题按钮逻辑：确认/下一题
     private void HandleLevelQuizAnswer()
     {
+        //Debug.Log($"处理关卡{currentQuizLevel}答题，当前索引：{currentQuizIndex}");
         List<SimpleQuestion> questions = (currentQuizLevel == 4) ? level4Questions : level5Questions;
         if (questions == null || questions.Count == 0) return;
         var currentQuestion = questions.Count > currentQuizIndex ? questions[currentQuizIndex] : null;
@@ -1317,6 +1519,7 @@ public class UIInterface : MonoBehaviour
     // 新增：显示第四/五关挑战成功界面
     private void ShowLevelQuizResultPanel(int level)
     {
+        //Debug.Log($"显示第四/五关挑战成功界面，当前关卡：{level}");
         SetUIVisible(resultPanel, true);
         if (resultTitleText != null)
             resultTitleText.text = "挑战成功";
